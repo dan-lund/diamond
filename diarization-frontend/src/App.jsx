@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Upload, Loader2, CheckCircle, User } from 'lucide-react';
+import { Upload, Loader2, CheckCircle2, Mic, FileAudio, X } from 'lucide-react';
+import AudioVisualizer from './AudioVisualizer';
 
 export default function Diarizer() {
   const [file, setFile] = useState(null);
   const [taskId, setTaskId] = useState(null);
-  const [status, setStatus] = useState('idle'); // idle, processing, completed, failed
+  const [status, setStatus] = useState('idle'); 
   const [results, setResults] = useState([]);
-
-  // Polling logic
+  
+  // Polling logic (Unchanged)
   useEffect(() => {
     let interval;
     if (status === 'processing' && taskId) {
@@ -27,7 +28,7 @@ export default function Diarizer() {
         } catch (err) {
           console.error("Polling error:", err);
         }
-      }, 3000); // Check every 3 seconds
+      }, 3000); 
     }
     return () => clearInterval(interval);
   }, [status, taskId]);
@@ -35,96 +36,167 @@ export default function Diarizer() {
   const handleUpload = async () => {
     if (!file) return;
     setStatus('processing');
+    setResults([]);
 
     const formData = new FormData();
     formData.append('file', file);
 
-    const res = await fetch('http://localhost:8000/diarize/', {
-      method: 'POST',
-      body: formData,
-    });
-    const data = await res.json();
-    setTaskId(data.task_id);
+    try {
+      const res = await fetch('http://localhost:8000/diarize/', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      setTaskId(data.task_id);
+    } catch (e) {
+      console.error("Upload failed", e);
+      setStatus('idle');
+    }
   };
 
   return (
-    <div className="p-8 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Speaker Diarization</h1>
-
-      {status === 'idle' && (
-  <div className="border-2 border-dashed border-gray-300 p-10 text-center rounded-lg bg-white shadow-sm">
-    {!file ? (
-      <>
-        <input 
-          type="file" 
-          id="file-upload"
-          onChange={(e) => setFile(e.target.files[0])} 
-          className="hidden" 
-          accept="audio/*"
-        />
-        <label 
-          htmlFor="file-upload"
-          className="cursor-pointer flex flex-col items-center gap-2 text-gray-500 hover:text-blue-600 transition-colors"
-        >
-          <Upload size={48} className="mb-2 opacity-50" />
-          <span className="font-medium">Click to select an audio file</span>
-          <span className="text-xs text-gray-400">WAV, MP3, or M4A supported</span>
-        </label>
-      </>
-    ) : (
-      <div className="space-y-4">
-        <div className="flex items-center justify-center gap-3 p-3 bg-blue-50 text-blue-700 rounded-md border border-blue-100 max-w-xs mx-auto">
-          <User size={18} />
-          <span className="truncate font-medium">{file.name}</span>
-          <button 
-            onClick={() => setFile(null)} 
-            className="text-blue-400 hover:text-red-500 ml-2"
-          >
-            ✕
-          </button>
-        </div>
+    <div className="min-h-screen bg-zinc-950 text-zinc-300 font-sans selection:bg-emerald-900 selection:text-emerald-50">
+      <div className="p-8 max-w-5xl mx-auto">
         
-        <button 
-          onClick={handleUpload}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-bold shadow-lg transition-all transform hover:scale-105 flex items-center gap-2 mx-auto"
-        >
-          Begin Diarization
-        </button>
-      </div>
-    )}
-  </div>
-)}
+        {/* Header */}
+        <header className="mb-12 text-center pt-10">
+            <h1 className="text-3xl font-bold text-emerald-500 tracking-tight mb-3 uppercase">
+              Speaker Diarization
+            </h1>
+            <p className="text-zinc-500 text-lg">
+              Upload audio to detect and separate distinct speakers.
+            </p>
+        </header>
 
-      {/* Processing State */}
-      {status === 'processing' && (
-        <div className="text-center p-10">
-          <Loader2 className="animate-spin mx-auto mb-4" size={48} />
-          <p>AI is analyzing your audio... this may take a minute.</p>
-        </div>
-      )}
-
-      {/* Results Display */}
-      {status === 'completed' && (
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold flex items-center gap-2">
-            <CheckCircle className="text-green-500" /> Results
-          </h2>
-          {results.map((item, index) => (
-            <div key={index} className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <div className="bg-blue-100 p-2 rounded-full">
-                <User size={20} className="text-blue-600" />
-              </div>
-              <div>
-                <p className="font-bold text-sm text-gray-500 uppercase">{item.speaker}</p>
-                <p className="text-gray-700">
-                  {Number(item.start || 0).toFixed(2)}s - {Number(item.end || 0).toFixed(2)}s
-                </p>
-              </div>
+        {/* STATE: IDLE (Upload) */}
+        {status === 'idle' && (
+          <div className="max-w-xl mx-auto">
+            <div className="bg-zinc-900 border border-zinc-800 p-12 text-center rounded-lg hover:border-emerald-700/50 transition-colors duration-300">
+                {!file ? (
+                <>
+                    <input 
+                    type="file" 
+                    id="file-upload"
+                    onChange={(e) => setFile(e.target.files[0])} 
+                    className="hidden" 
+                    accept="audio/*"
+                    />
+                    <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center gap-6 group">
+                        <div className="bg-zinc-950 p-5 rounded-full border border-zinc-800 group-hover:border-emerald-600/50 group-hover:text-emerald-500 transition-colors">
+                            <Upload size={32} className="text-zinc-600 group-hover:text-emerald-500 transition-colors" />
+                        </div>
+                        <div className="space-y-1">
+                            <span className="font-semibold text-lg block text-zinc-200 group-hover:text-emerald-400 transition-colors">Select Audio File</span>
+                            <span className="text-sm text-zinc-600">Supports WAV, MP3, M4A</span>
+                        </div>
+                    </label>
+                </>
+                ) : (
+                <div className="space-y-8">
+                    <div className="flex items-center justify-between p-4 bg-zinc-950 rounded border border-zinc-800">
+                        <div className="flex items-center gap-4">
+                            <div className="p-2 bg-emerald-900/20 rounded">
+                                <FileAudio size={24} className="text-emerald-600"/>
+                            </div>
+                            <div className="text-left">
+                                <p className="font-medium text-zinc-200 truncate max-w-[200px]">{file.name}</p>
+                                <p className="text-xs text-zinc-600">Ready to analyze</p>
+                            </div>
+                        </div>
+                        <button 
+                            onClick={(e) => { e.stopPropagation(); setFile(null); }} 
+                            className="text-zinc-600 hover:text-red-400 p-2 hover:bg-zinc-900 rounded transition-colors"
+                        >
+                            <X size={18} />
+                        </button>
+                    </div>
+                    
+                    <button 
+                    onClick={handleUpload}
+                    className="w-full bg-emerald-700 hover:bg-emerald-600 text-white px-8 py-3 rounded font-medium transition-colors flex items-center justify-center gap-2"
+                    >
+                        Start Analysis
+                    </button>
+                </div>
+                )}
             </div>
-          ))}
-          <button onClick={() => setStatus('idle')} className="text-blue-600 underline">Upload another</button>
-        </div>
-      )}
+          </div>
+        )}
+
+        {/* STATE: PROCESSING */}
+        {status === 'processing' && (
+          <div className="text-center p-24 bg-zinc-900 rounded-lg border border-zinc-800 max-w-3xl mx-auto">
+            <Loader2 className="animate-spin text-emerald-600 mx-auto mb-8" size={48} />
+            <h3 className="text-xl font-medium text-zinc-200">Processing Audio</h3>
+            <p className="text-zinc-500 mt-3">Identifying unique voice signatures...</p>
+          </div>
+        )}
+
+        {/* STATE: COMPLETED */}
+        {status === 'completed' && (
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            
+            {/* Visualizer Component */}
+            <AudioVisualizer file={file} results={results} />
+
+            {/* Transcript Log */}
+            <div className="bg-zinc-900 rounded-lg border border-zinc-800 overflow-hidden">
+                <div className="px-6 py-4 border-b border-zinc-800 bg-zinc-900 flex justify-between items-center">
+                    <h2 className="font-medium flex items-center gap-2 text-zinc-300">
+                        <CheckCircle2 size={18} className="text-emerald-600" /> 
+                        Transcript Log
+                    </h2>
+                    <span className="text-xs font-mono text-zinc-500 bg-zinc-950 px-2 py-1 rounded border border-zinc-800">
+                        {results.length} SEGMENTS
+                    </span>
+                </div>
+                
+                <div className="divide-y divide-zinc-800 max-h-[500px] overflow-y-auto">
+                {results.map((item, index) => (
+                    <div key={index} className="flex gap-5 p-5 hover:bg-zinc-800/50 transition-colors group">
+                        {/* Avatar/Icon */}
+                        <div className="mt-1">
+                            <div className="w-8 h-8 rounded bg-zinc-950 flex items-center justify-center border border-zinc-800 group-hover:border-emerald-900/50 transition-colors">
+                                <Mic size={14} className="text-zinc-600 group-hover:text-emerald-600" />
+                            </div>
+                        </div>
+                        
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="font-mono text-xs font-bold text-emerald-600 uppercase tracking-wider">
+                                    {item.speaker}
+                                </span>
+                                <span className="text-xs font-mono text-zinc-600">
+                                    {Number(item.start).toFixed(2)}s — {Number(item.end).toFixed(2)}s
+                                </span>
+                            </div>
+                            
+                            {/* Static Bar Representation */}
+                            <div className="h-1 w-full max-w-md bg-zinc-950 rounded-full mt-2 overflow-hidden">
+                                <div className="h-full bg-zinc-800 w-2/3 rounded-full"></div>
+                            </div> 
+                        </div>
+                    </div>
+                ))}
+                </div>
+            </div>
+
+            <div className="text-center pt-8 pb-10">
+                <button 
+                    onClick={() => {
+                        setFile(null);
+                        setStatus('idle');
+                        setResults([]);
+                    }} 
+                    className="text-zinc-500 hover:text-emerald-500 transition-colors text-sm font-medium hover:underline underline-offset-4"
+                >
+                    Analyze another file
+                </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
