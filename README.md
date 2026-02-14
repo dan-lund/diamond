@@ -1,4 +1,4 @@
-# Diamond 💎 Easy speaker diarisation and recognition
+# Diamond 💎 Easy speaker diarisation and identification
 
 A full-stack app that detects who spoke when in an audio file. Includes a Speaker Bank to identify known voices using cosine similarity on voice embeddings.
 
